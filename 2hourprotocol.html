@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The 2-Hour Finder Protocol</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .day-nav-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 300px;
+        }
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-800">⏰ The 2-Hour Finder Protocol</h1>
+            <p class="mt-2 text-lg text-slate-500">A 14-Day Guide to Find and Focus an Extra 2 Hours Every Day</p>
+        </header>
+
+        <nav class="mb-8">
+            <div id="progress-bar" class="grid grid-cols-7 md:grid-cols-14 gap-2">
+            </div>
+        </nav>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div id="main-content" class="lg:col-span-2 bg-white p-6 md:p-8 rounded-2xl shadow-sm">
+            </div>
+
+            <aside class="lg:col-span-1 space-y-8">
+                <div class="bg-white p-6 rounded-2xl shadow-sm">
+                    <h3 class="text-xl font-bold mb-4 text-slate-800">📝 My Tools</h3>
+                    <div id="tools-content">
+                        <div id="time-thief-tool">
+                            <h4 class="font-semibold text-slate-700">Time Thief Logger</h4>
+                            <p class="text-sm text-slate-500 mb-4">Log your activities to see where your time goes.</p>
+                            <div class="space-y-3">
+                                <select id="time-slot" class="w-full p-2 border rounded-md bg-slate-50">
+                                </select>
+                                <input type="text" id="activity-input" placeholder="What are you doing?" class="w-full p-2 border rounded-md bg-slate-50">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="is-thief-checkbox" class="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500">
+                                    <label for="is-thief-checkbox" class="ml-2 block text-sm text-slate-600">Is this a "Time Thief"?</label>
+                                </div>
+                                <button id="add-entry-btn" class="w-full bg-sky-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-sky-700 transition">Add Entry</button>
+                            </div>
+                            <div class="mt-6">
+                                <h5 class="font-semibold text-slate-700 mb-2">Today's Log</h5>
+                                <ul id="log-list" class="space-y-2 text-sm max-h-48 overflow-y-auto pr-2">
+                                    <li class="text-slate-400">Your logged activities will appear here...</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm">
+                    <h3 class="text-xl font-bold mb-2 text-slate-800">📊 Time Analysis</h3>
+                    <p id="chart-placeholder" class="text-center text-slate-400 text-sm">Log activities to see your time breakdown.</p>
+                    <div class="chart-container">
+                        <canvas id="timeThiefChart"></canvas>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+    </div>
+
+    <script>
+        const protocolData = {
+            0: {
+                title: "Welcome!",
+                content: `
+                    <p class="mb-4">Welcome to your journey to reclaim your time. This guide isn't about working harder; it's about reclaiming the hours you're already wasting. We'll work together over the next 14 days to find an extra two hours of productive time every single day.</p>
+                    <div class="mt-6 p-4 bg-slate-50 rounded-lg">
+                        <h4 class="font-bold text-slate-800">Why This is a 14-Day Plan (And Not a 2-Day Rush)</h4>
+                        <p class="mt-2">We're not just giving you information; we're helping you form a new habit. True mastery comes from consistent, daily practice. This 14-day plan is intentionally designed to:</p>
+                        <ul class="list-disc list-inside mt-2 space-y-1 text-slate-600">
+                            <li><strong>Prevent Overwhelm:</strong> One simple, manageable action each day.</li>
+                            <li><strong>Build Momentum:</strong> Each day's success builds on the last.</li>
+                            <li><strong>Create Lasting Habits:</strong> Practice makes these behaviors second nature.</li>
+                        </ul>
+                        <p class="mt-3 font-semibold">Stick with the plan. Trust the process. The results will be worth it.</p>
+                    </div>`
+            },
+            1: { title: "Day 1: The First 30 Minutes", content: "Your goal is simple: observe without judgment. Complete the 'Pre-Flight Prep', the 'Mindful Time Audit', and the 'Time Thief Log' as described in the guide. This is about building awareness." },
+            2: { title: "Day 2: The Time Thief Tracker", content: "Today, your mission is to become a silent observer. Use the 'Time Thief Logger' tool to log your activities in 30-minute blocks. Don't change anything yet—just gather data." },
+            3: { title: "Day 3: Identify Your Top 3", content: "Review the log you created yesterday. Find the patterns and identify the three biggest culprits stealing your time. These are your primary targets for the rest of the protocol." },
+            4: { title: "Day 4: Set Your Focus", content: "Choose one of your top three 'Time Thieves' and commit to reducing that activity by just 30 minutes today. This is your first small, powerful win." },
+            5: { title: "Day 5: The Digital Wall", content: "Go into your phone and computer settings and turn off all non-essential notifications. You decide when to check your apps, not the other way around." },
+            6: { title: "Day 6: The 'Batching' Method", content: "Group similar tasks together. Instead of checking email constantly, schedule two blocks per day to handle it. Do the same for calls and other recurring tasks to reduce mental switching." },
+            7: { title: "Day 7: The '15-Minute Rule'", content: "Find one task on your to-do list that you can complete in 15 minutes or less. Stop what you're doing and complete it right now to build momentum." },
+            8: { title: "Day 8: Find Your Analog Anchor", content: "Choose a 15-30 minute screen-free activity that grounds you, like reading a physical book, taking a walk, or stretching. Do it today to reset your mind." },
+            9: { title: "Day 9: The 'No' Day", content: "To own your time, you must protect it. Practice saying a polite but firm 'no' to a non-essential request today. Valuing your time is a fundamental skill." },
+            10: { title: "Day 10: Your First Focus Block", content: "You've reclaimed time, now it's time to use it. Find a 2-hour window in your schedule for tomorrow and book it as an unbreakable appointment with your goals." },
+            11: { title: "Day 11: Implement the Pomodoro", content: "During your 2-hour Focus Block, use the Pomodoro Method: work for 25 minutes, then take a 5-minute screen-free break. Repeat four times for maximum focus." },
+            12: { title: "Day 12: The Environmental Audit", content: "Take 10 minutes to prepare your workspace. Clean your physical desk and close all unnecessary digital tabs. A clean environment signals to your brain that it's time to work." },
+            13: { title: "Day 13: Your '2-Hour Finder' Test", content: "This is the final exam. Apply everything you've learned: schedule a 2-hour block, prepare your environment, and execute a perfect Pomodoro session on an important task." },
+            14: { title: "Day 14: The New Habit", content: "Congratulations! You've completed the protocol. Your mission today is to reflect on your success and schedule a focus block for tomorrow. This is your new way of working." },
+            15: {
+                title: "🌟 Bonus: The Long-Term Toolkit",
+                content: `
+                    <p class="mb-4">You've completed the protocol! The goal now is to turn this into a lasting habit. Here's a toolkit for maintaining your newfound time and focus:</p>
+                    <ul class="space-y-3">
+                        <li><strong class="text-slate-800">The Weekly "Time Thief" Check-in:</strong> Once a week, set aside 15 minutes to do a quick audit of any new activities that are starting to steal your time.</li>
+                        <li><strong class="text-slate-800">The "Analog Anchor" Ritual:</strong> Make this a non-negotiable daily ritual. Spend 15 minutes screen-free before your first focused work session.</li>
+                        <li><strong class="text-slate-800">The "Productive Friend" System:</strong> Share your success with a friend and ask them to be your accountability partner.</li>
+                        <li><strong class="text-slate-800">The "Digital-Free" Zone:</strong> Choose one space in your home and make it a strictly "Digital-Free" Zone.</li>
+                        <li><strong class="text-slate-800">The "Minimum Viable" Routine:</strong> On busy days, just focus on your core habits: turn off notifications, put your phone away for 30 minutes, and tackle one high-priority task.</li>
+                    </ul>`
+            }
+        };
+
+        const localStorageKey = 'protocolAppState';
+        const fourteenDaysInMs = 14 * 24 * 60 * 60 * 1000;
+
+        let appState = {
+            currentDay: 0,
+            completedDays: new Set(),
+            log: [],
+            lastUpdated: Date.now()
+        };
+
+        const progressBar = document.getElementById('progress-bar');
+        const mainContent = document.getElementById('main-content');
+        const timeSlotSelect = document.getElementById('time-slot');
+        const activityInput = document.getElementById('activity-input');
+        const isThiefCheckbox = document.getElementById('is-thief-checkbox');
+        const addEntryBtn = document.getElementById('add-entry-btn');
+        const logList = document.getElementById('log-list');
+        const chartPlaceholder = document.getElementById('chart-placeholder');
+
+        let timeThiefChart = null;
+
+        function updateUI() {
+            renderProgressBar();
+            renderMainContent();
+            renderLog();
+            updateChart();
+        }
+
+        // START OF NEW LOGIC FOR DATA PERSISTENCE
+        function saveStateToLocalStorage() {
+            // Save the state and the current timestamp
+            appState.lastUpdated = Date.now();
+            localStorage.setItem(localStorageKey, JSON.stringify({
+                ...appState,
+                // `completedDays` is a Set, so convert it to an array for JSON.stringify
+                completedDays: Array.from(appState.completedDays)
+            }));
+        }
+
+        function loadStateFromLocalStorage() {
+            const savedState = localStorage.getItem(localStorageKey);
+            if (savedState) {
+                const parsedState = JSON.parse(savedState);
+                const timeSinceLastUpdate = Date.now() - parsedState.lastUpdated;
+
+                // Check if more than 14 days have passed
+                if (timeSinceLastUpdate < fourteenDaysInMs) {
+                    appState = {
+                        ...parsedState,
+                        // Convert the completedDays array back into a Set
+                        completedDays: new Set(parsedState.completedDays)
+                    };
+                } else {
+                    // Clear the data if it's older than 14 days
+                    localStorage.removeItem(localStorageKey);
+                    console.log("Local data cleared as it was older than 14 days.");
+                }
+            }
+        }
+        // END OF NEW LOGIC FOR DATA PERSISTENCE
+
+        function renderProgressBar() {
+            progressBar.innerHTML = '';
+            for (let i = 1; i <= 14; i++) {
+                const dayBtn = document.createElement('button');
+                dayBtn.textContent = i;
+                dayBtn.dataset.day = i;
+                let baseClasses = 'day-nav-item text-sm font-semibold p-2 rounded-lg text-center';
+                if (appState.completedDays.has(i)) {
+                    baseClasses += ' bg-sky-600 text-white';
+                } else if (i === appState.currentDay) {
+                    baseClasses += ' bg-sky-200 text-sky-800 ring-2 ring-sky-500';
+                } else {
+                    baseClasses += ' bg-white hover:bg-slate-100 text-slate-600';
+                }
+                dayBtn.className = baseClasses;
+                dayBtn.onclick = () => {
+                    appState.currentDay = i;
+                    updateUI();
+                    saveStateToLocalStorage();
+                };
+                progressBar.appendChild(dayBtn);
+            }
+        }
+
+        function renderMainContent() {
+            const dayData = protocolData[appState.currentDay] || protocolData[15];
+            let contentHTML = `<h2 class="text-2xl md:text-3xl font-bold mb-4 text-slate-800">${dayData.title}</h2><div class="prose max-w-none text-slate-600">${dayData.content}</div>`;
+            
+            if (appState.currentDay > 0 && appState.currentDay <= 14) {
+                contentHTML += `
+                    <div class="mt-8 pt-6 border-t border-slate-200">
+                        <button id="complete-day-btn" class="bg-slate-800 text-white font-semibold py-2 px-6 rounded-md hover:bg-slate-900 transition disabled:bg-slate-300">
+                            ${appState.completedDays.has(appState.currentDay) ? 'Day Completed ✓' : 'Mark as Complete'}
+                        </button>
+                    </div>`;
+            } else if (appState.currentDay === 0) {
+                 contentHTML += `
+                    <div class="mt-8 pt-6 border-t border-slate-200">
+                        <button id="start-protocol-btn" class="bg-sky-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-sky-700 transition">
+                            Start Day 1 →
+                        </button>
+                    </div>`;
+            }
+            
+            mainContent.innerHTML = contentHTML;
+
+            if (appState.currentDay > 0 && appState.currentDay <= 14) {
+                const completeBtn = document.getElementById('complete-day-btn');
+                if (appState.completedDays.has(appState.currentDay)) {
+                    completeBtn.disabled = true;
+                }
+                completeBtn.onclick = () => {
+                    appState.completedDays.add(appState.currentDay);
+                    if (appState.currentDay < 14) {
+                        appState.currentDay++;
+                    } else {
+                        appState.currentDay = 15; // Go to bonus
+                    }
+                    updateUI();
+                    saveStateToLocalStorage();
+                };
+            } else if (appState.currentDay === 0) {
+                document.getElementById('start-protocol-btn').onclick = () => {
+                    appState.currentDay = 1;
+                    updateUI();
+                    saveStateToLocalStorage();
+                }
+            }
+        }
+
+        function populateTimeSlots() {
+            for (let h = 7; h < 23; h++) {
+                for (let m = 0; m < 60; m += 30) {
+                    const hour = h.toString().padStart(2, '0');
+                    const minute = m.toString().padStart(2, '0');
+                    const nextM = (m + 30) % 60;
+                    const nextH = h + (m + 30 >= 60 ? 1 : 0);
+                    const nextHour = nextH.toString().padStart(2, '0');
+                    const nextMinute = nextM.toString().padStart(2, '0');
+                    
+                    const option = document.createElement('option');
+                    option.value = `${hour}:${minute}`;
+                    option.textContent = `${hour}:${minute} - ${nextHour}:${nextMinute}`;
+                    timeSlotSelect.appendChild(option);
+                }
+            }
+        }
+
+        function addLogEntry() {
+            const time = timeSlotSelect.value;
+            const activity = activityInput.value.trim();
+            const isThief = isThiefCheckbox.checked;
+
+            if (!activity) {
+                alert('Please enter an activity.');
+                return;
+            }
+
+            appState.log.push({ time, activity, isThief });
+            activityInput.value = '';
+            isThiefCheckbox.checked = false;
+            
+            updateUI();
+            saveStateToLocalStorage();
+        }
+        
+        function renderLog() {
+            if (appState.log.length === 0) {
+                logList.innerHTML = '<li class="text-slate-400">Your logged activities will appear here...</li>';
+                return;
+            }
+            
+            logList.innerHTML = '';
+            const sortedLog = [...appState.log].sort((a, b) => a.time.localeCompare(b.time));
+
+            sortedLog.forEach(entry => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center p-2 rounded-md';
+                li.innerHTML = `
+                    <div>
+                        <span class="font-mono text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">${entry.time}</span>
+                        <span class="ml-2">${entry.activity}</span>
+                    </div>
+                    ${entry.isThief ? '<span class="text-xs font-semibold text-red-500">THIEF</span>' : ''}
+                `;
+                logList.appendChild(li);
+            });
+        }
+
+        function updateChart() {
+            if (appState.log.length === 0) {
+                chartPlaceholder.style.display = 'block';
+                if (timeThiefChart) timeThiefChart.destroy();
+                timeThiefChart = null;
+                return;
+            }
+            
+            chartPlaceholder.style.display = 'none';
+
+            const thiefCount = appState.log.filter(e => e.isThief).length;
+            const productiveCount = appState.log.length - thiefCount;
+
+            const data = {
+                labels: ['Productive Time', 'Time Thieves'],
+                datasets: [{
+                    label: 'Activity Breakdown',
+                    data: [productiveCount, thiefCount],
+                    backgroundColor: [
+                        'rgb(56, 189, 248)', // sky-400
+                        'rgb(239, 68, 68)'    // red-500
+                    ],
+                    borderColor: '#f8fafc',
+                    hoverOffset: 4
+                }]
+            };
+
+            if (timeThiefChart) {
+                timeThiefChart.data = data;
+                timeThiefChart.update();
+            } else {
+                const ctx = document.getElementById('timeThiefChart').getContext('2d');
+                timeThiefChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 20
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+            }
+        }
+
+        addEntryBtn.addEventListener('click', addLogEntry);
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStateFromLocalStorage();
+            populateTimeSlots();
+            updateUI();
+        });
+    </script>
+</body>
+</html>
